@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>菜单生成器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px;
+            background-color: #f5f5f5;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+        }
+
+        .container {
+            max-width: 800px;
+            background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+                border-radius: 8px;
+            }
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1.8rem;
+            background: linear-gradient(45deg, #2d3748, #4a5568);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            color: #1a1a1a;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            border-radius: 30px;
+            background: #f0f2f5;
+            color: #4a5568;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            min-width: 120px;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(45deg, #4a5568, #2d3748);
+            color: white;
+            box-shadow: 0 4px 12px rgba(74, 85, 104, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .tab-button:hover:not(.active) {
+            background: #e2e8f0;
+            transform: translateY(-1px);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .preference {
+            margin: 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .preference label {
+            width: 120px;
+            font-size: 1rem;
+            color: #333;
+            flex-shrink: 0;
+        }
+
+        .number-control {
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+            background: white;
+            flex: 1;
+            max-width: 100%;
+        }
+
+        .number-btn {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f2f5;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .number-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .number-btn:active {
+            background: #cbd5e0;
+        }
+
+        input[type="number"] {
+            flex: 1;
+            height: 48px;
+            padding: 8px 0;
+            border: none;
+            font-size: 1rem;
+            text-align: center;
+            -moz-appearance: textfield;
+            min-width: 20px;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        @media (max-width: 480px) {
+            .preference {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .preference label {
+                width: 100%;
+                margin-bottom: 4px;
+            }
+
+            .number-control {
+                width: 100%;
+            }
+        }
+
+        input[type="text"] {
+            width: 100%;
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: #4a5568;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #2d3748;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .main-button {
+            margin: 18px 0;
+            width: 100%;
+        }
+
+        .action-button {
+            padding: 8px 16px;
+            background: #4a5568;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .action-button:hover {
+            background: #2d3748;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .edit-button {
+            background: #4299e1;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .edit-button:hover {
+            background: #3182ce;
+        }
+
+        .delete-button {
+            background: #f56565;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .delete-button:hover {
+            background: #e53e3e;
+        }
+
+        .menu {
+            margin-top: 24px;
+        }
+
+        .dish {
+            padding: 20px;
+            margin: 16px 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-left: 5px solid #4a5568;
+            animation: fadeIn 0.3s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .dish:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .dish-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .dish-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .dish-description {
+            color: #718096;
+            font-size: 0.95rem;
+            display: inline-block;
+        }
+
+        .dish-type {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            background: rgba(74, 85, 104, 0.1);
+            color: #4a5568;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .dish-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .category-section {
+            margin: 20px 0;
+        }
+
+        .add-dish-form {
+            background: linear-gradient(to bottom, #ffffff, #f8fafc);
+            padding: 24px;
+            border-radius: 12px;
+            margin: 20px 0 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #edf2f7;
+        }
+
+        .add-dish-form h2 {
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            color: #2d3748;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            position: relative;
+        }
+
+        .add-dish-form h2::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: #4a5568;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            background-color: white;
+        }
+
+        .form-control:focus {
+            border-color: #4a5568;
+            box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.2);
+            outline: none;
+        }
+
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 35px;
+        }
+
+        .add-dish-btn {
+            background: linear-gradient(45deg, #4a5568, #2d3748);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .add-dish-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .add-dish-btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .form-group-half {
+            flex: 1;
+        }
+
+        @media (max-width: 480px) {
+            .add-dish-form {
+                padding: 18px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+
+        .edit-form {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin: 25px 0;
+            justify-content: center;
+        }
+
+        .category-section h2 {
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            color: #2d3748;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+            position: relative;
+        }
+
+        .category-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 80px;
+            height: 2px;
+            background: #4a5568;
+        }
+
+        .dish:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .dish:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .dish:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>菜单生成器</h1>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('generate')">生成菜单</button>
+            <button class="tab-button" onclick="switchTab('manage')">管理菜单</button>
+        </div>
+
+        <!-- 生成菜单标签页 -->
+        <div id="generateContent" class="tab-content" style="display: block;">
+            <div class="preference">
+                <label>荤菜数量：</label>
+                <div class="number-control">
+                    <button class="number-btn" onclick="decrementValue('meatCount')">-</button>
+                    <input type="number" id="meatCount" value="1" min="0">
+                    <button class="number-btn" onclick="incrementValue('meatCount')">+</button>
+                </div>
+            </div>
+            <div class="preference">
+                <label>素菜数量：</label>
+                <div class="number-control">
+                    <button class="number-btn" onclick="decrementValue('vegCount')">-</button>
+                    <input type="number" id="vegCount" value="1" min="0">
+                    <button class="number-btn" onclick="incrementValue('vegCount')">+</button>
+                </div>
+            </div>
+            <div class="preference">
+                <label>汤类数量：</label>
+                <div class="number-control">
+                    <button class="number-btn" onclick="decrementValue('soupCount')">-</button>
+                    <input type="number" id="soupCount" value="0" min="0">
+                    <button class="number-btn" onclick="incrementValue('soupCount')">+</button>
+                </div>
+            </div>
+            <button class="main-button" onclick="generateMenu()">生成菜单</button>
+            <div id="menuDisplay" class="menu"></div>
+        </div>
+
+        <!-- 管理菜单标签页 -->
+        <div id="manageContent" class="tab-content">
+            <!-- 添加新菜品 - 优化版 -->
+            <div class="add-dish-form">
+                <h2>添加新菜品</h2>
+                <div class="form-row">
+                    <div class="form-group form-group-half">
+                        <label for="newDishName">菜品名称</label>
+                        <input type="text" id="newDishName" class="form-control" placeholder="请输入菜品名称">
+                    </div>
+                    <div class="form-group form-group-half">
+                        <label for="newDishType">菜品类型</label>
+                        <select id="newDishType" class="form-control">
+                            <option value="meat">荤菜</option>
+                            <option value="vegetarian">素菜</option>
+                            <option value="soup">汤类</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newDishDesc">菜品描述</label>
+                    <input type="text" id="newDishDesc" class="form-control" placeholder="请输入菜品描述（可选）">
+                </div>
+                <button onclick="addDish()" class="add-dish-btn">添加菜品</button>
+            </div>
+
+            <!-- 添加导入导出按钮 -->
+            <div class="action-buttons">
+                <button onclick="exportData()" class="action-button">导出菜单数据</button>
+                <label for="importFile" class="action-button" style="display: inline-block; cursor: pointer;">
+                    导入菜单数据
+                </label>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+            </div>
+
+            <!-- 荤菜管理 -->
+            <div class="category-section">
+                <h2>荤菜管理</h2>
+                <div id="meatDishList"></div>
+            </div>
+
+            <!-- 素菜管理 -->
+            <div class="category-section">
+                <h2>素菜管理</h2>
+                <div id="vegDishList"></div>
+            </div>
+
+            <!-- 汤类管理 -->
+            <div class="category-section">
+                <h2>汤类管理</h2>
+                <div id="soupDishList"></div>
+            </div>
+        </div>
+
+        <!-- 编辑表单 -->
+        <div class="overlay" id="editOverlay"></div>
+        <div class="edit-form" id="editForm">
+            <h2>编辑菜品</h2>
+            <div class="form-group">
+                <label for="editDishName">菜品名称</label>
+                <input type="text" id="editDishName">
+            </div>
+            <div class="form-group">
+                <label for="editDishDesc">菜品描述</label>
+                <input type="text" id="editDishDesc">
+            </div>
+            <input type="hidden" id="editDishType">
+            <input type="hidden" id="editDishIndex">
+            <div>
+                <button onclick="saveDishEdit()">保存</button>
+                <button onclick="cancelEdit()">取消</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
