@@ -109,6 +109,9 @@ function generateMenu() {
     displayDishes(selectedMeat, '荤菜');
     displayDishes(selectedVeg, '素菜');
     displayDishes(selectedSoup, '汤类');
+
+    // 显示复制按钮
+    document.getElementById('copyMenuBtn').style.display = 'block';
 }
 
 // 刷新所有菜品列表显示
@@ -324,5 +327,121 @@ function decrementValue(id) {
     const currentValue = parseInt(input.value);
     if (currentValue > 0) {
         input.value = currentValue - 1;
+    }
+}
+
+// 修改复制菜单功能，添加后备方案
+function copyMenu() {
+    const menuDisplay = document.getElementById('menuDisplay');
+    let menuText = '';
+
+    // 分类名称映射
+    const categoryMap = {
+        'meat': '荤菜',
+        'vegetarian': '素菜',
+        'soup': '汤类'
+    };
+
+    // 存储不同类型的菜品
+    const dishByType = {
+        'meat': [],
+        'vegetarian': [],
+        'soup': []
+    };
+
+    // 获取所有菜品
+    const dishes = menuDisplay.querySelectorAll('.dish');
+
+    // 如果没有菜品，不执行复制
+    if (dishes.length === 0) {
+        return;
+    }
+
+    // 将菜品按类型分类
+    dishes.forEach(dish => {
+        const dishName = dish.querySelector('.dish-name').textContent;
+        // 尝试从 data-type 属性获取类型，如果没有则从 dish-type 元素中推断
+        let dishType = dish.getAttribute('data-type');
+        if (!dishType) {
+            const typeElem = dish.querySelector('.dish-type');
+            if (typeElem) {
+                const typeText = typeElem.textContent;
+                if (typeText.includes('荤菜')) dishType = 'meat';
+                else if (typeText.includes('素菜')) dishType = 'vegetarian';
+                else dishType = 'soup';
+            } else {
+                // 如果无法确定类型，默认为荤菜
+                dishType = 'meat';
+            }
+        }
+
+        // 添加菜品到对应类型数组
+        if (dishByType[dishType]) {
+            dishByType[dishType].push(dishName);
+        }
+    });
+
+    // 按照要求的格式组合文本
+    for (const [type, typeNames] of Object.entries(dishByType)) {
+        if (typeNames.length > 0) {
+            menuText += `${categoryMap[type]}：${typeNames.join('，')}`;
+            menuText += '\n';
+        }
+    }
+
+    // 尝试使用现代 Clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(menuText)
+            .then(() => showCopySuccess())
+            .catch(err => {
+                console.error('Clipboard API failed: ', err);
+                fallbackCopy(menuText);
+            });
+    } else {
+        // 后备方案
+        fallbackCopy(menuText);
+    }
+
+    // 复制成功后的 UI 反馈
+    function showCopySuccess() {
+        const copyBtn = document.getElementById('copyMenuBtn');
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = '复制成功✅';
+        copyBtn.style.backgroundColor = '#48bb78';
+
+        setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.backgroundColor = '#38a169';
+        }, 2000);
+    }
+
+    // 后备复制方法
+    function fallbackCopy(text) {
+        // 创建一个临时文本区域
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        let success = false;
+        try {
+            // 执行复制命令
+            success = document.execCommand('copy');
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+        }
+
+        // 移除临时元素
+        document.body.removeChild(textArea);
+
+        if (success) {
+            showCopySuccess();
+        } else {
+            alert('复制失败，请手动复制');
+        }
     }
 }
