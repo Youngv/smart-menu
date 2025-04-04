@@ -1,6 +1,6 @@
 {
-    "name": "菜单生成器",
-    "short_name": "菜单生成器",
+    "name": "今天吃什么",
+    "short_name": "今天吃什么",
     "description": "一个简单好用的菜单生成器，帮您轻松安排每日菜单",
     "start_url": "/",
     "display": "standalone",

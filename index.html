@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>菜单生成器</title>
+    <title>今天吃什么</title>
     <style>
         * {
             box-sizing: border-box;
@@ -271,6 +271,7 @@
             border-left: 5px solid #4a5568;
             animation: fadeIn 0.3s ease-out;
             animation-fill-mode: both;
+            position: relative;
         }
 
         .dish:hover {
@@ -313,6 +314,40 @@
         .dish-actions {
             display: flex;
             gap: 6px;
+        }
+
+        /* 锁定按钮样式 */
+        .lock-button {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            color: #4a5568;
+        }
+
+        .lock-button:hover {
+            background: #e2e8f0;
+            transform: scale(1.1);
+        }
+
+        .lock-button.locked {
+            background: #4299e1;
+            color: white;
+        }
+
+        .lock-button.locked:hover {
+            background: #3182ce;
         }
 
         .category-section {
@@ -520,7 +555,7 @@
 
 <body>
     <div class="container">
-        <h1>菜单生成器</h1>
+        <h1>今天吃什么</h1>
 
         <div class="tabs">
             <button class="tab-button active" onclick="switchTab('generate')">生成菜单</button>

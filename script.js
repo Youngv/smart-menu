@@ -1,10 +1,25 @@
 // 菜单数据，初始化为空对象
 let dishes = {};
+// 存储锁定的菜品
+let lockedDishes = {
+    meat: [],
+    vegetarian: [],
+    soup: []
+};
 
 // 页面加载时从 JSON 文件获取菜单数据
 document.addEventListener('DOMContentLoaded', async function () {
-    await loadDishesData();
+    if (!loadFromLocalStorage()) {
+        await loadDishesData();
+    }
+
+    // 重置锁定的菜品（每次刷新或打开页面时）
+    lockedDishes = { meat: [], vegetarian: [], soup: [] };
+    // 同时清除 localStorage 中的锁定记录
+    localStorage.removeItem('lockedDishes');
+
     refreshDishLists();
+    refreshDishCounts();
 });
 
 // 从 JSON 文件加载菜单数据
@@ -84,31 +99,70 @@ function generateMenu() {
         return;
     }
 
-    const selectedMeat = shuffleArray(dishes.meat).slice(0, meatCount);
-    const selectedVeg = shuffleArray(dishes.vegetarian).slice(0, vegCount);
-    const selectedSoup = shuffleArray(dishes.soup).slice(0, soupCount);
+    // 根据锁定状态获取菜品
+    let selectedMeat = [];
+    let selectedVeg = [];
+    let selectedSoup = [];
+
+    // 首先添加已锁定的菜品
+    selectedMeat = [...lockedDishes.meat];
+    selectedVeg = [...lockedDishes.vegetarian];
+    selectedSoup = [...lockedDishes.soup];
+
+    // 计算还需要多少菜品
+    const neededMeat = Math.max(0, meatCount - selectedMeat.length);
+    const neededVeg = Math.max(0, vegCount - selectedVeg.length);
+    const neededSoup = Math.max(0, soupCount - selectedSoup.length);
+
+    // 过滤掉已经锁定的菜品，避免重复
+    const availableMeat = dishes.meat.filter(dish =>
+        !lockedDishes.meat.some(lockedDish => lockedDish.name === dish.name));
+    const availableVeg = dishes.vegetarian.filter(dish =>
+        !lockedDishes.vegetarian.some(lockedDish => lockedDish.name === dish.name));
+    const availableSoup = dishes.soup.filter(dish =>
+        !lockedDishes.soup.some(lockedDish => lockedDish.name === dish.name));
+
+    // 随机选择剩余需要的菜品
+    if (neededMeat > 0) {
+        selectedMeat = [...selectedMeat, ...shuffleArray(availableMeat).slice(0, neededMeat)];
+    }
+    if (neededVeg > 0) {
+        selectedVeg = [...selectedVeg, ...shuffleArray(availableVeg).slice(0, neededVeg)];
+    }
+    if (neededSoup > 0) {
+        selectedSoup = [...selectedSoup, ...shuffleArray(availableSoup).slice(0, neededSoup)];
+    }
 
     const menuDisplay = document.getElementById('menuDisplay');
     menuDisplay.innerHTML = '';
 
-    const displayDishes = (dishes, type) => {
+    const displayDishes = (dishes, type, category) => {
         dishes.forEach(dish => {
             const dishElement = document.createElement('div');
             dishElement.className = 'dish';
+            dishElement.setAttribute('data-type', category);
+
+            // 检查菜品是否被锁定
+            const isLocked = lockedDishes[category].some(lockedDish => lockedDish.name === dish.name);
+
             dishElement.innerHTML = `
                 <span class="dish-name">${dish.name}</span>
                 <div class="dish-info">
                     <span class="dish-type">${type}</span>
                     <span class="dish-description">${dish.description}</span>
                 </div>
+                <button class="lock-button ${isLocked ? 'locked' : ''}" 
+                    onclick="toggleLock('${category}', '${dish.name}', '${dish.description}')">
+                    ${isLocked ? '🔒' : '🔓'}
+                </button>
             `;
             menuDisplay.appendChild(dishElement);
         });
     };
 
-    displayDishes(selectedMeat, '荤菜');
-    displayDishes(selectedVeg, '素菜');
-    displayDishes(selectedSoup, '汤类');
+    displayDishes(selectedMeat, '荤菜', 'meat');
+    displayDishes(selectedVeg, '素菜', 'vegetarian');
+    displayDishes(selectedSoup, '汤类', 'soup');
 
     // 显示复制按钮
     document.getElementById('copyMenuBtn').style.display = 'block';
@@ -240,15 +294,6 @@ function loadFromLocalStorage() {
     }
     return false;
 }
-
-// 初始化：先尝试从 localStorage 加载，失败则从 JSON 文件加载
-document.addEventListener('DOMContentLoaded', async function () {
-    if (!loadFromLocalStorage()) {
-        await loadDishesData();
-    }
-    refreshDishLists();
-    refreshDishCounts();
-});
 
 // 导出菜单数据到文件
 function exportData() {
@@ -444,4 +489,38 @@ function copyMenu() {
             alert('复制失败，请手动复制');
         }
     }
+}
+
+// 切换菜品锁定状态
+function toggleLock(category, name, description) {
+    // 查找菜品是否已锁定
+    const lockIndex = lockedDishes[category].findIndex(dish => dish.name === name);
+
+    if (lockIndex >= 0) {
+        // 如果已锁定，解锁它
+        lockedDishes[category].splice(lockIndex, 1);
+    } else {
+        // 如果未锁定，锁定它
+        lockedDishes[category].push({ name, description });
+    }
+
+    // 保存锁定状态到本地存储
+    localStorage.setItem('lockedDishes', JSON.stringify(lockedDishes));
+
+    // 刷新菜单显示，更新锁定图标
+    const menuDishes = document.querySelectorAll('.dish');
+    menuDishes.forEach(dishElement => {
+        if (dishElement.querySelector('.dish-name').textContent === name) {
+            const lockButton = dishElement.querySelector('.lock-button');
+            if (lockIndex >= 0) {
+                // 已经解锁
+                lockButton.textContent = '🔓';
+                lockButton.classList.remove('locked');
+            } else {
+                // 已经锁定
+                lockButton.textContent = '🔒';
+                lockButton.classList.add('locked');
+            }
+        }
+    });
 }
