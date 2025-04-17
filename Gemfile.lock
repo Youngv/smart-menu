@@ -1,0 +1,32 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    bigdecimal (3.1.9)
+    json (2.10.2)
+    mini_portile2 (2.8.8)
+    nio4r (2.7.4)
+    puma (6.6.0)
+      nio4r (~> 2.0)
+    rack (3.1.13)
+    rack-cors (2.0.2)
+      rack (>= 2.0.0)
+    roda (3.91.0)
+      rack
+    sequel (5.91.0)
+      bigdecimal
+    sqlite3 (2.0.4)
+      mini_portile2 (~> 2.8.0)
+
+PLATFORMS
+  x86_64-linux
+
+DEPENDENCIES
+  json (~> 2.10, >= 2.10.2)
+  puma (~> 6.6)
+  rack-cors (~> 2.0, >= 2.0.2)
+  roda (~> 3.91)
+  sequel (~> 5.91)
+  sqlite3 (~> 2.0)
+
+BUNDLED WITH
+   2.2.3
