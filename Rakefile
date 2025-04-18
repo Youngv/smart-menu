@@ -16,4 +16,4 @@ end
 desc '运行完整的数据库设置和种子数据导入'
 task :setup => [:db_setup, :db_seed]
 
-task :default => :server 
+task :default => :server

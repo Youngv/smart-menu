@@ -7,32 +7,62 @@ let lockedDishes = {
     soup: []
 };
 
-// 页面加载时从 JSON 文件获取菜单数据
+// 页面加载时从 API 获取菜单数据
 document.addEventListener('DOMContentLoaded', async function () {
-    if (!loadFromLocalStorage()) {
-        await loadDishesData();
+    // 检查是否需要添加隐藏的编辑 ID 字段
+    if (document.getElementById('editForm') && !document.getElementById('editDishId')) {
+        const editForm = document.getElementById('editForm');
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.id = 'editDishId';
+        hiddenField.name = 'editDishId';
+        editForm.appendChild(hiddenField);
     }
+
+    await loadDishesData();
 
     // 重置锁定的菜品（每次刷新或打开页面时）
     lockedDishes = { meat: [], vegetarian: [], soup: [] };
-    // 同时清除 localStorage 中的锁定记录
-    localStorage.removeItem('lockedDishes');
+    localStorage.removeItem('lockedDishes'); // Keep locked dishes local for now
 
-    refreshDishLists();
-    refreshDishCounts();
+    // refreshDishLists(); // No need to call here, loadDishesData does it
+    // refreshDishCounts(); // No need to call here, loadDishesData does it
 });
 
-// 从 JSON 文件加载菜单数据
-async function loadDishesData() {
-    const response = await fetch('dishes.json');
-    dishes = await response.json();
-    refreshDishCounts();
+// 获取当前访问地址的基础 URL
+function getBaseUrl() {
+    return window.location.origin;
 }
 
-// 保存菜单数据到 localStorage
-function saveDishesData() {
-    localStorage.setItem('smartMenuDishes', JSON.stringify(dishes));
-    console.log('菜品数据已保存到 localStorage');
+// 从 API 加载菜单数据并刷新界面
+async function loadDishesData() {
+    try {
+        const baseUrl = getBaseUrl();
+        const response = await fetch(`${baseUrl}/api/dishes`);
+        dishes = await response.json(); // Update the global dishes object
+        refreshDishLists(); // Refresh UI after fetching
+        refreshDishCounts(); // Refresh counts after fetching
+    } catch (error) {
+        console.error('获取菜品数据失败：', error);
+        alert('无法加载菜品数据，请检查网络连接或联系管理员');
+    }
+}
+
+// 保存菜单数据到 API
+async function saveDishesData() {
+    try {
+        const baseUrl = getBaseUrl();
+        await fetch(`${baseUrl}/api/dishes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dishes)
+        });
+        console.log('菜品数据已保存到服务器');
+    } catch (error) {
+        console.error('保存到服务器失败：', error);
+    }
 }
 
 // 标签页切换功能
@@ -64,9 +94,9 @@ function switchTab(tabName) {
 
 // 更新菜品数量显示
 function refreshDishCounts() {
-    document.getElementById('meatCount').max = dishes.meat.length;
-    document.getElementById('vegCount').max = dishes.vegetarian.length;
-    document.getElementById('soupCount').max = dishes.soup.length;
+    document.getElementById('meatCount').max = dishes.meat ? dishes.meat.length : 0;
+    document.getElementById('vegCount').max = dishes.vegetarian ? dishes.vegetarian.length : 0;
+    document.getElementById('soupCount').max = dishes.soup ? dishes.soup.length : 0;
 }
 
 // 洗牌算法，随机打乱数组
@@ -185,9 +215,16 @@ function refreshCategoryList(category, typeName, containerId) {
         return;
     }
 
-    dishes[category].forEach((dish, index) => {
+    dishes[category].forEach((dish) => {
+        // Use dish.id or dish._id from API response
+        const dishId = dish.id || dish._id;
+        if (!dishId) {
+            console.warn('Dish missing ID:', dish);
+            return; // Skip dishes without an ID
+        }
         const dishElement = document.createElement('div');
         dishElement.className = 'dish';
+        dishElement.dataset.id = dishId;
         dishElement.innerHTML = `
             <span class="dish-name">${dish.name}</span>
             <div class="dish-info">
@@ -195,8 +232,8 @@ function refreshCategoryList(category, typeName, containerId) {
                 <span class="dish-description">${dish.description}</span>
             </div>
             <div class="dish-actions">
-                <button class="action-button" onclick="editDish('${category}', ${index})">编辑</button>
-                <button class="action-button" onclick="deleteDish('${category}', ${index})">删除</button>
+                <button class="action-button" onclick="editDish('${dishId}')">编辑</button>
+                <button class="action-button" onclick="deleteDish('${dishId}')">删除</button>
             </div>
         `;
         container.appendChild(dishElement);
@@ -204,7 +241,7 @@ function refreshCategoryList(category, typeName, containerId) {
 }
 
 // 添加新菜品
-function addDish() {
+async function addDish() {
     const type = document.getElementById('newDishType').value;
     const name = document.getElementById('newDishName').value.trim();
     const description = document.getElementById('newDishDesc').value.trim();
@@ -214,63 +251,102 @@ function addDish() {
         return;
     }
 
-    dishes[type].push({ name, description });
-    saveDishesData();
-    refreshDishLists();
-    refreshDishCounts();
+    try {
+        const baseUrl = getBaseUrl();
+        await fetch(`${baseUrl}/api/dishes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, description, type })
+        });
 
-    // 清空输入框
-    document.getElementById('newDishName').value = '';
-    document.getElementById('newDishDesc').value = '';
+        // 清空输入框
+        document.getElementById('newDishName').value = '';
+        document.getElementById('newDishDesc').value = '';
+        alert('菜品添加成功！');
 
-    alert('菜品添加成功！');
+        await loadDishesData(); // Reload data from API to refresh UI
+    } catch (error) {
+        console.error('添加菜品失败：', error);
+        alert('添加菜品失败，请稍后再试');
+    }
 }
 
-// 编辑菜品
-function editDish(type, index) {
-    const dish = dishes[type][index];
+// 准备编辑菜品 (获取数据并填充表单)
+async function editDish(id) {
+    try {
+        const baseUrl = getBaseUrl();
+        const response = await fetch(`${baseUrl}/api/dishes/${id}`);
+        if (!response.ok) {
+            throw new Error(`获取菜品信息失败：${response.statusText}`);
+        }
+        const dish = await response.json();
 
-    // 填充编辑表单
-    document.getElementById('editDishName').value = dish.name;
-    document.getElementById('editDishDesc').value = dish.description;
-    document.getElementById('editDishType').value = type;
-    document.getElementById('editDishIndex').value = index;
+        // 填充编辑表单
+        document.getElementById('editDishName').value = dish.name;
+        document.getElementById('editDishDesc').value = dish.description;
+        document.getElementById('editDishType').value = dish.type;
+        document.getElementById('editDishId').value = id;
 
-    // 显示编辑表单和遮罩
-    document.getElementById('editForm').style.display = 'block';
-    document.getElementById('editOverlay').style.display = 'block';
+        // 显示编辑表单和遮罩
+        document.getElementById('editForm').style.display = 'block';
+        document.getElementById('editOverlay').style.display = 'block';
+    } catch (error) {
+        console.error('准备编辑菜品失败：', error);
+        alert('无法加载菜品信息进行编辑');
+    }
 }
 
 // 保存编辑的菜品
-function saveDishEdit() {
+async function saveDishEdit() {
     const name = document.getElementById('editDishName').value.trim();
     const description = document.getElementById('editDishDesc').value.trim();
     const type = document.getElementById('editDishType').value;
-    const index = parseInt(document.getElementById('editDishIndex').value);
+    const id = document.getElementById('editDishId').value;
 
     if (!name) {
         alert('菜品名称不能为空！');
         return;
     }
 
-    dishes[type][index] = { name, description };
-    saveDishesData();
-    refreshDishLists();
+    try {
+        const baseUrl = getBaseUrl();
+        await fetch(`${baseUrl}/api/dishes/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, description, type })
+        });
 
-    // 关闭编辑表单
-    cancelEdit();
+        // 关闭编辑表单
+        cancelEdit();
+        alert('菜品更新成功！');
 
-    alert('菜品更新成功！');
+        await loadDishesData(); // Reload data from API to refresh UI
+    } catch (error) {
+        console.error('更新菜品失败：', error);
+        alert('更新菜品失败，请稍后再试');
+        cancelEdit(); // Close form even on error
+    }
 }
 
 // 删除菜品
-function deleteDish(type, index) {
+async function deleteDish(id) {
     if (confirm('确定要删除这个菜品吗？')) {
-        dishes[type].splice(index, 1);
-        saveDishesData();
-        refreshDishLists();
-        refreshDishCounts();
-        alert('菜品已删除！');
+        try {
+            const baseUrl = getBaseUrl();
+            await fetch(`${baseUrl}/api/dishes/${id}`, {
+                method: 'DELETE'
+            });
+
+            alert('菜品已删除！');
+            await loadDishesData(); // Reload data from API to refresh UI
+        } catch (error) {
+            console.error('删除菜品失败：', error);
+            alert('删除菜品失败，请稍后再试');
+        }
     }
 }
 
@@ -280,75 +356,76 @@ function cancelEdit() {
     document.getElementById('editOverlay').style.display = 'none';
 }
 
-// 尝试从 localStorage 加载数据
-function loadFromLocalStorage() {
-    const savedData = localStorage.getItem('smartMenuDishes');
-    if (savedData) {
-        try {
-            dishes = JSON.parse(savedData);
-            console.log('从 localStorage 加载菜品数据成功');
-            return true;
-        } catch (e) {
-            console.error('解析 localStorage 数据失败', e);
-        }
-    }
-    return false;
-}
-
 // 导出菜单数据到文件
-function exportData() {
-    // 创建要下载的数据
-    const dataStr = JSON.stringify(dishes, null, 2); // 使用缩进格式化 JSON
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    const exportFileName = 'dishes_' + new Date().toISOString().slice(0, 10) + '.json';
+async function exportData() {
+    // Fetch current data from API for export
+    try {
+        const baseUrl = getBaseUrl();
+        const response = await fetch(`${baseUrl}/api/dishes`);
+        const currentDishes = await response.json();
 
-    // 创建一个用于下载的链接元素
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileName);
-    linkElement.style.display = 'none';
+        // 创建要下载的数据
+        const dataStr = JSON.stringify(currentDishes, null, 2); // 使用缩进格式化 JSON
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        const exportFileName = 'dishes_' + new Date().toISOString().slice(0, 10) + '.json';
 
-    // 添加到文档中并触发点击
-    document.body.appendChild(linkElement);
-    linkElement.click();
+        // 创建一个用于下载的链接元素
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileName);
+        linkElement.style.display = 'none';
 
-    // 清理
-    document.body.removeChild(linkElement);
+        // 添加到文档中并触发点击
+        document.body.appendChild(linkElement);
+        linkElement.click();
 
-    alert('菜单数据已导出！');
+        // 清理
+        document.body.removeChild(linkElement);
+
+        alert('菜单数据已导出！');
+    } catch (error) {
+        console.error('导出数据失败：', error);
+        alert('导出数据失败，请检查网络连接');
+    }
 }
 
 // 从文件导入菜单数据
-function importData(event) {
+async function importData(event) {
     const file = event.target.files[0];
     if (!file) {
         return; // 没有选择文件
     }
 
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = async function (e) {
         try {
             // 解析 JSON 数据
             const importedData = JSON.parse(e.target.result);
 
             // 验证数据结构
             if (!importedData.meat || !importedData.vegetarian || !importedData.soup) {
-                throw new Error('数据格式不正确');
+                throw new Error('数据格式不正确，必须包含 meat, vegetarian, soup 分类');
             }
 
-            // 更新菜单数据
-            dishes = importedData;
-
-            // 刷新界面
-            refreshDishLists();
-            refreshDishCounts();
+            const baseUrl = getBaseUrl();
+            // 这里需要一个 API 端点来接收整个数据结构并替换服务器上的数据
+            // 假设有一个 POST /api/dishes/import 端点
+            await fetch(`${baseUrl}/api/dishes/import`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(importedData)
+            });
 
             // 清除 file input 的值，允许重新选择同一文件
             document.getElementById('importFile').value = '';
-
             alert('菜单数据导入成功！');
+
+            await loadDishesData(); // Reload data from API to refresh UI
+
         } catch (error) {
-            alert('导入失败：' + (error.message || '无效的数据格式'));
+            alert('导入失败：' + (error.message || '无效的数据格式或服务器错误'));
             console.error('导入错误：', error);
 
             // 清除 file input 的值

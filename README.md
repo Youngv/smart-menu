@@ -73,7 +73,7 @@ POST /api/dishes
 {
   "name": "菜品名称",
   "description": "菜品描述",
-  "dish_type": "meat|vegetarian|soup"
+  "type": "meat|vegetarian|soup"
 }
 ```
 
@@ -88,7 +88,7 @@ PUT /api/dishes/:id
 {
   "name": "更新的菜品名称",
   "description": "更新的菜品描述",
-  "dish_type": "meat|vegetarian|soup"
+  "type": "meat|vegetarian|soup"
 }
 ```
 
@@ -118,3 +118,10 @@ DELETE /api/dishes/:id
 │   ├── routes/         # API路由
 │   └── db/             # 数据库文件
 ``` 
+
+## Docker 部署
+
+```bash
+docker build -t smart-menu .
+docker run -d --rm -p 8080:80 --name smart-menu smart-menu
+```

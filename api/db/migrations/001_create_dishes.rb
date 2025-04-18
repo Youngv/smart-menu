@@ -4,10 +4,10 @@ Sequel.migration do
       primary_key :id
       String :name, null: false
       String :description, text: true
-      String :dish_type, null: false
+      String :type, null: false
       DateTime :created_at
       DateTime :updated_at
-      index [:name, :dish_type], unique: true
+      index [:name, :type], unique: true
     end
   end
 

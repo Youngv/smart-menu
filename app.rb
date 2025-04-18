@@ -25,15 +25,6 @@ class MenuApp < Roda
   opts[:root] = File.expand_path('.', __dir__)
 
   route do |r|
-    # 提供静态文件服务
-    r.public
-
-    r.root do
-      # 根路径返回 index.html
-      response['Content-Type'] = 'text/html'
-      File.read(File.join(opts[:root], 'public', 'index.html'))
-    end
-
     # API 路由
     r.on 'api' do
       response['Content-Type'] = 'application/json'
@@ -42,13 +33,6 @@ class MenuApp < Roda
       r.on 'dishes' do
         r.run DishesApi
       end
-    end
-
-    # 所有其他路由，用于 SPA 路由处理
-    r.get do
-      # 对于任何其他 GET 请求，返回 index.html 以支持前端路由
-      response['Content-Type'] = 'text/html'
-      File.read(File.join(opts[:root], 'index.html'))
     end
   end
 end

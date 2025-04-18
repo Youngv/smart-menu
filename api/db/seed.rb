@@ -14,7 +14,7 @@ def seed_database
     Dish.create(
       name: dish['name'],
       description: dish['description'],
-      dish_type: 'meat',
+      type: 'meat',
       created_at: Time.now,
       updated_at: Time.now
     )
@@ -25,7 +25,7 @@ def seed_database
     Dish.create(
       name: dish['name'],
       description: dish['description'],
-      dish_type: 'vegetarian',
+      type: 'vegetarian',
       created_at: Time.now,
       updated_at: Time.now
     )
@@ -36,7 +36,7 @@ def seed_database
     Dish.create(
       name: dish['name'],
       description: dish['description'],
-      dish_type: 'soup',
+      type: 'soup',
       created_at: Time.now,
       updated_at: Time.now
     )

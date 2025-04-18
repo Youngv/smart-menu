@@ -10,6 +10,7 @@ GEM
     rack (3.1.13)
     rack-cors (2.0.2)
       rack (>= 2.0.0)
+    rake (13.2.1)
     roda (3.91.0)
       rack
     sequel (5.91.0)
@@ -24,6 +25,7 @@ DEPENDENCIES
   json (~> 2.10, >= 2.10.2)
   puma (~> 6.6)
   rack-cors (~> 2.0, >= 2.0.2)
+  rake (~> 13.2)
   roda (~> 3.91)
   sequel (~> 5.91)
   sqlite3 (~> 2.0)

@@ -5,7 +5,7 @@ class Dish < Sequel::Model
   plugin :validation_helpers
   def validate
     super
-    validates_presence [:name, :dish_type, :description]
-    validates_includes %w[meat vegetarian soup], :dish_type
+    validates_presence [:name, :type, :description]
+    validates_includes %w[meat vegetarian soup], :type
   end
 end 

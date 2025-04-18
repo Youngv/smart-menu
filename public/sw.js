@@ -2,7 +2,6 @@ const CACHE_NAME = 'menu-generator-v1';
 const urlsToCache = [
     '/',
     '/index.html',
-    '/style.css',
     '/script.js',
     '/dishes.json',
     '/manifest.json',
@@ -38,6 +37,13 @@ self.addEventListener('activate', event => {
 
 // 处理 fetch 请求
 self.addEventListener('fetch', event => {
+    // 对于 API 请求，总是从网络获取，不缓存
+    if (event.request.url.includes('/api/')) {
+        event.respondWith(fetch(event.request));
+        return; // 结束处理，不执行后续缓存逻辑
+    }
+
+    // 对于非 API 请求，使用 Cache First 策略
     event.respondWith(
         caches.match(event.request)
             .then(response => {
