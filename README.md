@@ -122,6 +122,7 @@ DELETE /api/dishes/:id
 ## Docker 部署
 
 ```bash
+docker rm -f smart-menu
 docker build -t smart-menu .
 docker run -d --rm -p 8080:80 --name smart-menu smart-menu
 ```
